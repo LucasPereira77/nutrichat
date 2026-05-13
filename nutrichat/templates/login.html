@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NutriChat — Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@400;500;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+</head>
+<body class="auth-body">
+
+<!-- Elementos decorativos de fundo -->
+<div class="bg-orbs">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+</div>
+
+<div class="auth-container">
+    <!-- Painel esquerdo — branding -->
+    <div class="auth-brand">
+        <div class="brand-content">
+            <div class="brand-logo">
+                <span class="logo-icon">🥗</span>
+                <span class="logo-text">NutriChat</span>
+            </div>
+            <h1 class="brand-headline">Sua nutricionista<br><em>virtual inteligente</em></h1>
+            <p class="brand-sub">Orientações personalizadas, cálculo de IMC e planos alimentares com o poder da inteligência artificial.</p>
+            <div class="brand-features">
+                <div class="feature-pill">✦ Cálculo de IMC</div>
+                <div class="feature-pill">✦ Plano alimentar</div>
+                <div class="feature-pill">✦ Evolução do peso</div>
+                <div class="feature-pill">✦ IA especializada</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Painel direito — formulário -->
+    <div class="auth-panel">
+        <div class="auth-form-wrap">
+            <div class="form-header">
+                <h2>Bem-vindo de volta</h2>
+                <p>Entre na sua conta para continuar</p>
+            </div>
+
+            {% if error %}
+            <div class="alert alert-error">
+                <span>⚠</span> {{ error }}
+            </div>
+            {% endif %}
+
+            <form method="POST" action="/login" class="auth-form">
+                <div class="field-group">
+                    <label for="email">E-mail</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">✉</span>
+                        <input type="email" id="email" name="email"
+                               placeholder="seu@email.com" required autocomplete="email">
+                    </div>
+                </div>
+
+                <div class="field-group">
+                    <label for="senha">Senha</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">🔒</span>
+                        <input type="password" id="senha" name="senha"
+                               placeholder="••••••••" required autocomplete="current-password">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary">
+                    Entrar no NutriChat
+                    <span class="btn-arrow">→</span>
+                </button>
+            </form>
+
+            <div class="auth-switch">
+                <span>Ainda não tem conta?</span>
+                <a href="/cadastro" class="link-accent">Criar conta grátis</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

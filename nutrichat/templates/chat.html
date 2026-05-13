@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NutriChat — Olá, {{ user['nome'].split()[0] }}!</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/chat.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@400;500;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+</head>
+<body class="chat-body">
+
+<!-- ===== SIDEBAR ===== -->
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-logo">
+            <span class="logo-icon-sm">🥗</span>
+            <span>NutriChat</span>
+        </div>
+        <button class="sidebar-close" id="sidebarClose" aria-label="Fechar menu">✕</button>
+    </div>
+
+    <!-- Avatar + nome do usuário -->
+    <div class="user-card">
+        <div class="user-avatar">{{ user['nome'][0].upper() }}</div>
+        <div class="user-info">
+            <div class="user-name">{{ user['nome'].split()[0] }}</div>
+            <div class="user-goal">
+                {% if user['objetivo'] == 'emagrecer' %}🔥 Emagrecer
+                {% elif user['objetivo'] == 'ganhar_massa' %}💪 Ganhar massa
+                {% else %}⚖ Manter peso{% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Card de IMC -->
+    <div class="imc-card">
+        <div class="imc-header">
+            <span class="imc-label">Seu IMC atual</span>
+            {% if imc %}
+            <span class="imc-badge {{ 'normal' if 18.5 <= imc < 25 else 'warning' if imc < 30 else 'danger' }}">
+                {{ classificacao }}
+            </span>
+            {% endif %}
+        </div>
+        {% if imc %}
+        <div class="imc-value">{{ imc }}</div>
+        <div class="imc-bar-wrap">
+            <div class="imc-bar">
+                <div class="imc-needle" style="left: {{ [[((imc - 15) / 25 * 100)|round(1), 0]|max, 100]|min }}%"></div>
+            </div>
+            <div class="imc-labels">
+                <span>Baixo</span><span>Normal</span><span>Alto</span>
+            </div>
+        </div>
+        {% else %}
+        <div class="imc-empty">
+            <p>Complete seu perfil para ver seu IMC</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Sugestões rápidas -->
+    <div class="quick-section">
+        <div class="quick-title">Perguntas rápidas</div>
+        <div class="quick-chips" id="quickChips">
+            <button class="chip" data-msg="Qual seria uma dieta ideal para o meu objetivo?">📋 Minha dieta</button>
+            <button class="chip" data-msg="Quais alimentos eu devo evitar?">🚫 Alimentos evitar</button>
+            <button class="chip" data-msg="Calcule meu IMC e me explique o resultado">📊 Calcular IMC</button>
+            <button class="chip" data-msg="Sugira um cardápio semanal saudável para mim">🗓 Cardápio semanal</button>
+            <button class="chip" data-msg="Quais são boas fontes de proteína?">🥩 Proteínas</button>
+            <button class="chip" data-msg="Dicas de lanches saudáveis para o dia">🍎 Lanches saudáveis</button>
+            <button class="chip" data-msg="Quantas calorias devo consumir por dia?">🔢 Calorias diárias</button>
+            <button class="chip" data-msg="Como melhorar minha hidratação?">💧 Hidratação</button>
+        </div>
+    </div>
+
+    <!-- Dados do perfil -->
+    <div class="profile-data">
+        <div class="profile-row">
+            <span>Peso</span>
+            <span>{{ user['peso'] }}kg</span>
+        </div>
+        <div class="profile-row">
+            <span>Altura</span>
+            <span>{{ user['altura'] }}m</span>
+        </div>
+        <div class="profile-row">
+            <span>Idade</span>
+            <span>{{ user['idade'] }} anos</span>
+        </div>
+    </div>
+
+    <!-- Ações da sidebar -->
+    <div class="sidebar-actions">
+        <button class="action-btn" id="btnEditProfile">✏ Editar perfil</button>
+        <button class="action-btn action-btn-danger" id="btnClearChat">🗑 Limpar histórico</button>
+        <a href="/logout" class="action-btn action-btn-logout">← Sair</a>
+    </div>
+</aside>
+
+<!-- Overlay para mobile -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- ===== ÁREA PRINCIPAL ===== -->
+<main class="chat-main">
+
+    <!-- Header do chat -->
+    <header class="chat-header">
+        <button class="hamburger" id="hamburger" aria-label="Menu">
+            <span></span><span></span><span></span>
+        </button>
+        <div class="chat-header-info">
+            <div class="bot-status">
+                <span class="status-dot"></span>
+                <span class="bot-name">NutriBot</span>
+            </div>
+            <span class="bot-subtitle">Nutricionista Virtual IA</span>
+        </div>
+        <div class="header-actions">
+            <button class="icon-btn" id="btnHeaderProfile" title="Editar perfil">👤</button>
+        </div>
+    </header>
+
+    <!-- Mensagens -->
+    <div class="messages-area" id="messagesArea">
+        <!-- Mensagem de boas-vindas -->
+        {% if not historico %}
+        <div class="welcome-screen">
+            <div class="welcome-icon">🥗</div>
+            <h2>Olá, {{ user['nome'].split()[0] }}!</h2>
+            <p>Sou a <strong>NutriBot</strong>, sua nutricionista virtual com inteligência artificial.<br>
+            Estou aqui para te ajudar com alimentação saudável, cálculo de IMC e muito mais!</p>
+            <div class="welcome-chips">
+                <button class="chip chip-lg" data-msg="Olá! Pode me dar um plano alimentar para o meu objetivo?">🍽 Quero um plano alimentar</button>
+                <button class="chip chip-lg" data-msg="Calcule meu IMC e interprete para mim">📊 Calcular meu IMC</button>
+                <button class="chip chip-lg" data-msg="Quais são os alimentos mais nutritivos que devo incluir na dieta?">🥦 Alimentos nutritivos</button>
+            </div>
+        </div>
+        {% else %}
+        <!-- Renderiza histórico de mensagens -->
+        {% for msg in historico %}
+        <div class="message {{ 'user-message' if msg['role'] == 'user' else 'bot-message' }}">
+            {% if msg['role'] == 'assistant' %}
+            <div class="msg-avatar bot-avatar">🥗</div>
+            {% endif %}
+            <div class="msg-bubble">
+                <div class="msg-text">{{ msg['message'] | replace('\n', '<br>') | safe }}</div>
+                <div class="msg-time">{{ msg['timestamp'][:16] if msg['timestamp'] else '' }}</div>
+            </div>
+            {% if msg['role'] == 'user' %}
+            <div class="msg-avatar user-avatar">{{ user['nome'][0].upper() }}</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+        {% endif %}
+    </div>
+
+    <!-- Indicador de digitação -->
+    <div class="typing-indicator" id="typingIndicator" style="display:none">
+        <div class="msg-avatar bot-avatar">🥗</div>
+        <div class="typing-bubble">
+            <span></span><span></span><span></span>
+        </div>
+    </div>
+
+    <!-- Input de mensagem -->
+    <div class="chat-input-area">
+        <div class="input-container">
+            <textarea
+                id="messageInput"
+                class="message-input"
+                placeholder="Pergunte sobre nutrição, alimentos, dieta..."
+                rows="1"
+                maxlength="1000"
+            ></textarea>
+            <button class="send-btn" id="sendBtn" aria-label="Enviar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13"/>
+                </svg>
+            </button>
+        </div>
+        <div class="input-footer">
+            <span class="char-count" id="charCount">0/1000</span>
+            <span class="input-hint">Enter para enviar · Shift+Enter para nova linha</span>
+        </div>
+    </div>
+</main>
+
+<!-- ===== MODAL DE EDIÇÃO DE PERFIL ===== -->
+<div class="modal-overlay" id="profileModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>✏ Editar Perfil</h3>
+            <button class="modal-close" id="modalClose">✕</button>
+        </div>
+        <div class="modal-body">
+            <form id="profileForm" class="auth-form">
+                <div class="field-row two-cols">
+                    <div class="field-group">
+                        <label>Peso (kg)</label>
+                        <div class="input-wrap">
+                            <span class="input-icon">⚖</span>
+                            <input type="number" name="peso" id="editPeso"
+                                   step="0.1" min="30" max="300"
+                                   value="{{ user['peso'] or '' }}" placeholder="Ex: 70.5">
+                        </div>
+                    </div>
+                    <div class="field-group">
+                        <label>Altura (m)</label>
+                        <div class="input-wrap">
+                            <span class="input-icon">📏</span>
+                            <input type="number" name="altura" id="editAltura"
+                                   step="0.01" min="1.0" max="2.5"
+                                   value="{{ user['altura'] or '' }}" placeholder="Ex: 1.75">
+                        </div>
+                    </div>
+                </div>
+                <div class="field-group">
+                    <label>Idade</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">🎂</span>
+                        <input type="number" name="idade" id="editIdade"
+                               min="10" max="110"
+                               value="{{ user['idade'] or '' }}" placeholder="Ex: 28">
+                    </div>
+                </div>
+                <div class="field-group">
+                    <label>Objetivo</label>
+                    <div class="select-wrap">
+                        <select name="objetivo" id="editObjetivo">
+                            <option value="emagrecer" {{ 'selected' if user['objetivo'] == 'emagrecer' }}>🔥 Emagrecer</option>
+                            <option value="ganhar_massa" {{ 'selected' if user['objetivo'] == 'ganhar_massa' }}>💪 Ganhar massa muscular</option>
+                            <option value="manter_peso" {{ 'selected' if user['objetivo'] == 'manter_peso' }}>⚖ Manter peso atual</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="field-group">
+                    <label>Nível de atividade</label>
+                    <div class="select-wrap">
+                        <select name="nivel_atividade" id="editNivel">
+                            <option value="sedentario" {{ 'selected' if user['nivel_atividade'] == 'sedentario' }}>🛋 Sedentário</option>
+                            <option value="leve" {{ 'selected' if user['nivel_atividade'] == 'leve' }}>🚶 Leve</option>
+                            <option value="moderado" {{ 'selected' if user['nivel_atividade'] == 'moderado' }}>🏃 Moderado</option>
+                            <option value="intenso" {{ 'selected' if user['nivel_atividade'] == 'intenso' }}>🏋 Intenso</option>
+                            <option value="atleta" {{ 'selected' if user['nivel_atividade'] == 'atleta' }}>🥇 Atleta</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="imcPreview" class="imc-preview" style="display:none">
+                    <span>IMC calculado:</span>
+                    <strong id="imcPreviewVal"></strong>
+                    <span id="imcPreviewClass"></span>
+                </div>
+                <button type="submit" class="btn-primary">Salvar alterações</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+</body>
+</html>
