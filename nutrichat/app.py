@@ -249,7 +249,7 @@ if __name__ == '__main__':
     if not os.path.exists(DATABASE):
         os.makedirs(os.path.dirname(DATABASE), exist_ok=True)
     print("NutriChat iniciando...")
-    print("Acesse: http://localhost:5000")
+    print("Acesse: http://localhost:8080")
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 8080)))
    
     
